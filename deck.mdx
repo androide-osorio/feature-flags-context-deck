@@ -3,150 +3,325 @@ import {
   CodeSurferColumns,
   Step,
 } from "code-surfer";
-import { github, vsDark } from "@code-surfer/themes";
+import { SlideLayout, SurferLayout } from "./layout";
+import taxfix, { draculaTaxfix } from "./theme";
+import "./css/font-face.css"
 
-export const theme = vsDark;
+export const theme = taxfix;
 
-# Hello 👋
+<SlideLayout>
 
-You are using [MDX Deck](https://github.com/jxnblk/mdx-deck) and [Code Surfer](https://codesurfer.pomb.us)
+# An alternative for handling feature flags using local state
+
+<br />
+<br />
+
+<div style={{ textAlign: "right" }}>
+  Andrés Osorio
+</div>
+
+</SlideLayout>
 
 ---
 
-<CodeSurfer>
+<SlideLayout>
 
-```js title="This is a title" subtitle="and this a subtitle"
-function lorem(ipsum, dolor = 1) {
-  const sit = ipsum == null ? 0 : ipsum.sit;
-  dolor = sit - amet(dolor);
-  return sit
-    ? consectetur(ipsum, 0, dolor < 0 ? 0 : dolor)
-    : [];
+#### Why??
+----
+- Potentially reduce tech debt
+
+- Declaratively render A/B components instead of imperatively
+
+- Adds new feature witout affecting the current one *too much*
+
+</SlideLayout>
+
+---
+
+<SlideLayout style={{ textAlign: 'center' }}>
+
+## So, how?
+
+</SlideLayout>
+
+---
+
+<SlideLayout>
+
+1. Use context to share Feature flag state locally
+2. Make each "feature" component use the context
+3. Add the components where they need to be
+4. profit? 🙈
+
+</SlideLayout>
+
+---
+
+<CodeSurfer theme={draculaTaxfix}>
+
+```jsx title="1. Use context to share Feature flag state locally"
+export type FeatureState = {
+  enabled: boolean;
+  // any other state the feature might need
 }
 
-function incididunt(ipsum, ut = 1) {
-  ut = labore.et(amet(ut), 0);
-  const sit = ipsum == null ? 0 : ipsum.sit;
+export const initialState: FeatureState = {
+  enabled: false,
+  // ...
+};
+```
 
-  if (!sit || ut < 1) {
-    return [];
-  }
+```jsx
+export type FeatureState = {
+  enabled: boolean;
+  // any other state the feature might need
+}
 
-  let dolore = 0;
-  let magna = 0;
-  const aliqua = new eiusmod(labore.ut(sit / ut));
+export const initialState: FeatureState = {
+  enabled: false,
+  // ...
+};
 
-  while (dolore < sit) {
-    aliqua[magna++] = consectetur(
-      ipsum,
-      dolore,
-      (dolore += ut)
+export const FeatureContext = createContext<FeatureState>(initialState);
+
+// a component that provides the value for the context
+export const FeatureProvider = () => {
+    // redux selector or any other way to get the feature flag value
+    const enabled = useSelector(getIsFeatureEnabled);
+
+    const contextValue = {
+      ...initialState,
+      enabled,
+      // ...
+    };
+
+    return (
+      <FeatureContext.Provider value={contextValue}>
+        {children}
+      </FeatureContext.Provider>
     );
-  }
-
-  return aliqua;
 }
 ```
 
-```js
-function lorem(ipsum, dolor = 1) {
-  const sit = ipsum == null ? 0 : ipsum.sit;
-  dolor = sit - amet(dolor);
-  return sit
-    ? consectetur(ipsum, 0, dolor < 0 ? 0 : dolor)
-    : [];
+```jsx
+export type FeatureState = {
+  enabled: boolean;
+  // any other state the feature might need
 }
 
-function adipiscing(...elit) {
-  if (!elit.sit) {
-    return [];
-  }
+export const initialState: FeatureState = {
+  enabled: false,
+  // ...
+};
 
-  const sed = elit[0];
-  return eiusmod.tempor(sed) ? sed : [sed];
-}
+export const FeatureContext = createContext<FeatureState>(initialState);
 
-function incididunt(ipsum, ut = 1) {
-  ut = labore.et(amet(ut), 0);
-  const sit = ipsum == null ? 0 : ipsum.sit;
+// a component that provides the value for the context
+export const FeatureProvider = () => {
+    // redux selector or any other way to get the feature flag value
+    const enabled = useSelector(getIsFeatureEnabled);
 
-  if (!sit || ut < 1) {
-    return [];
-  }
+    const contextValue = {
+      ...initialState,
+      enabled,
+      // ...
+    };
 
-  let dolore = 0;
-  let magna = 0;
-  const aliqua = new eiusmod(labore.ut(sit / ut));
-
-  while (dolore < sit) {
-    aliqua[magna++] = consectetur(
-      ipsum,
-      dolore,
-      (dolore += ut)
+    return (
+      <FeatureContext.Provider value={contextValue}>
+        {children}
+      </FeatureContext.Provider>
     );
-  }
-
-  return aliqua;
 }
-```
 
-```diff 1[10:14],2[15:19],3[22:27],10:12
-
+// define a hook for easily accessing the context
+export const useFeatureContext = () => {
+  const context = useContext(FeatureContext);
+  if (context === undefined) {
+    throw new Error('useFeatureContext must be used within a FeatureProvider');
+  }
+  return context;
+};
 ```
 
 </CodeSurfer>
 
 ---
 
-<CodeSurferColumns themes={[vsDark, github]}>
+<SurferLayout>
+
+<CodeSurferColumns themes={[draculaTaxfix, draculaTaxfix]} sizes={[1,1]}>
 
 <Step>
 
-```js
-const magna = aliqua => aliqua.ut((enim, ad) => enim, 0);
-```
+<SlideLayout>
 
-```js
-const minim = (ad, enim) => dolore.magna(ad / enim);
+## 2. Make each feature component use the context
+
+Include the context in the components, so they are aware of the configuration
+
+</SlideLayout>
+
+
+```jsx
+import { useFeatureContext } from '@/feature';
+
+const FeatureButton = () => {
+  const { enabled } = useFeatureContext()
+
+  const handleClick = () => {
+    alert('Feature is working 💃🏻!')
+  }
+
+  if (!enabled) {
+    return null
+  }
+
+  return (
+    <button onClick={handleClick}>My awesome feature</button>
+  )
+}
 ```
 
 </Step>
 
 <Step>
 
-```js
-const lorem = (ipsum, dolor, sit) => {
-  const amet = dolor - ipsum;
-  return consectetur.adipiscing(
-    {
-      elit: sed.eiusmod(sit - dolor) / amet + 2,
-    },
-    (tempor, incididunt) => ipsum + amet * incididunt
-  );
-};
+<SlideLayout>
 
-const magna = aliqua => aliqua.ut((enim, ad) => enim, 0);
-```
+## 3. Add the components where they need to be
 
-```js
-const minim = (ad, enim) => dolore.magna(ad / enim);
+Include the component in the screen or page where they need to be. They have to be wrapped in the provider component in order to work
 
-const sed = (eiusmod, tempor, incididunt) => {
-  const ut = tempor - eiusmod;
-  return labore.et(
-    {
-      amet: dolore.magna(incididunt - tempor) / ut + 2,
-    },
-    (aliqua, elit) => eiusmod + ut * elit
-  );
-};
+</SlideLayout>
+
+
+```jsx
+import { FeatureButton, FeatureContext } from '@/feature';
+
+const FeatureScreen = () => {
+  // do things
+
+  return (
+    <div>
+      <h1>The test subject screen</h1>
+      <p>some filler text so I have a bit of elements</p>
+      <FeatureProvider>
+        {/* Only rendered when the feature flag is activated */}
+        <FeatureButton />
+      </FeatureProvider>
+    </div>
+  )
+}
 ```
 
 </Step>
 
 </CodeSurferColumns>
 
+</SurferLayout>
+
 ---
 
-docs:  
-[codesurfer.pomb.us](https://codesurfer.pomb.us)
+<SlideLayout style={{ textAlign: 'center' }}>
+
+# Advantages
+
+</SlideLayout>
+
+---
+
+<SurferLayout>
+
+<CodeSurferColumns themes={[draculaTaxfix, draculaTaxfix, draculaTaxfix]} sizes={[1,1]}>
+
+<Step>
+
+<SlideLayout>
+
+1. Moves tech debt from the test subject component to the feature components
+2. Is more declarative than imperative.
+3. When FF needs removal, only the feature components need modifications (remove context, and remove provider)
+
+</SlideLayout>
+
+
+```jsx
+// from this
+const FeatureScreen = () => {
+  const enabled = useSelector(getIsFeatureEnabled);
+
+  return (
+    <div>
+      <h1>The test subject screen</h1>
+      <p>some filler text so I have a bit of elements</p>
+      {enabled && <FeatureButton />}
+    </div>
+  )
+}
+```
+
+</Step>
+
+<Step>
+
+<SlideLayout>
+
+1. Moves tech debt from the test subject component to the feature components
+2. Is more declarative than imperative.
+3. When FF needs removal, only the feature components need modifications (remove context, and remove provider)
+
+</SlideLayout>
+
+```jsx
+// to this
+const FeatureScreen = () => {
+  return (
+    <div>
+      <h1>The test subject screen</h1>
+      <p>some filler text so I have a bit of elements</p>
+      <FeatureProvider>
+        {/* Only rendered when the feature flag is activated */}
+        <FeatureButton />
+      </FeatureProvider>
+    </div>
+  )
+}
+
+```
+
+</Step>
+
+<Step>
+
+<SlideLayout>
+
+1. Moves tech debt from the test subject component to the feature components
+2. Is more declarative than imperative.
+3. When FF needs removal, only the feature components need substantial modifications (remove context), and the test subjects need only minor ones (removing the provider)
+
+</SlideLayout>
+
+```jsx
+// Now it is a permanent feature
+const FeatureScreen = () => {
+  return (
+    <div>
+      <h1>The test subject screen</h1>
+      <p>some filler text so I have a bit of elements</p>
+      <FeatureButton />
+    </div>
+  )
+}
+
+```
+
+</Step>
+
+</CodeSurferColumns>
+
+</SurferLayout>
+
+---
+
+## So, yeah 😁...
